@@ -15,8 +15,9 @@ func main() {
 		panic(err)
 	}
 
-	stack := stack.NewStack(1000000)
+	st := stack.NewStack(50)
 
+	buf := make(chan string, 50)
 	r := bufio.NewReader(fi)
 	for {
 		str, err := r.ReadString(byte('\n'))
@@ -26,11 +27,22 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		stack.Push([]byte(str))
+		select {
+		case buf <- str:
+		default:
+			print(st, buf)
+			buf <- str
+		}
 	}
+	print(st, buf)
+}
 
+func print(st *stack.Stack, buf chan string) {
+	for i := 0; i < cap(buf); i++ {
+		st.Push([]byte(<-buf))
+	}
 	for {
-		b := stack.Pop()
+		b := st.Pop()
 		if b == nil {
 			break
 		}
